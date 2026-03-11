@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Power Factor Capacitor Calculator | Electrical Engineering Tool</title>
+
+<!-- ============================================================
+     LIBRARIES
+     - Chart.js  : Power factor improvement chart
+     - jsPDF     : PDF report generation
+     ============================================================ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   CSS VARIABLES — Edit these to retheme the entire app
+   ============================================================ */
+:root {
+  --bg:          #f0f4f8;
+  --surface:     #ffffff;
+  --surface2:    #eef2f7;
+  --blue:        #1560bd;
+  --blue-light:  #2979ff;
+  --blue-dark:   #0d3d8a;
+  --accent:      #00c2a8;
+  --warn:        #f59e0b;
+  --text:        #0f1e35;
+  --text-muted:  #5a6e85;
+  --border:      #d1dce8;
+  --shadow:      0 4px 24px rgba(21,96,189,0.10);
+  --shadow-lg:   0 8px 40px rgba(21,96,189,0.18);
+  --radius:      14px;
+  --radius-sm:   8px;
+  --mono:        'Share Tech Mono', monospace;
+  --sans:        'Barlow', sans-serif;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   LAYOUT WRAPPERS
+   ============================================================ */
+.page-wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 60px; }
+
+/* ============================================================
+   HEADER BANNER
+   ============================================================ */
+.site-header {
+  background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 55%, var(--blue-light) 100%);
+  padding: 36px 24px 32px;
+  border-radius: var(--radius);
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+.site-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.header-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 8px;
+  position: relative;
+}
+.site-header h1 {
+  font-size: clamp(20px, 4vw, 30px);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  position: relative;
+  max-width: 640px;
+}
+.site-header p {
+  margin-top: 10px;
+  color: rgba(255,255,255,0.78);
+  font-size: 14px;
+  font-weight: 400;
+  position: relative;
+  max-width: 540px;
+}
+.header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,194,168,0.22);
+  border: 1px solid rgba(0,194,168,0.45);
+  color: #7ffcef;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-top: 16px;
+  position: relative;
+}
+
+/* ============================================================
+   CARD
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px 28px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title::before {
+  content: '';
+  display: block;
+  width: 18px;
+  height: 3px;
+  background: var(--blue);
+  border-radius: 2px;
+}
+
+/* ============================================================
+   FORM GRID
+   ============================================================ */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.field input, .field select {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+.field input:focus, .field select:focus {
+  border-color: var(--blue-light);
+  box-shadow: 0 0 0 3px rgba(41,121,255,0.15);
+  background: #fff;
+}
+.field .hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: -2px;
+}
+
+/* ============================================================
+   CALCULATE BUTTON
+   ============================================================ */
+.btn-calc {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-light) 100%);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 16px rgba(41,121,255,0.35);
+}
+.btn-calc:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(41,121,255,0.45); }
+.btn-calc:active { transform: translateY(0); }
+
+/* ============================================================
+   RESULTS SECTION
+   ============================================================ */
+#results { display: none; }
+
+.kvar-hero {
+  background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+  border-radius: var(--radius);
+  padding: 28px;
+  color: #fff;
+  margin-bottom: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  box-shadow: var(--shadow-lg);
+}
+.kvar-main .label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+.kvar-main .value {
+  font-family: var(--mono);
+  font-size: clamp(36px, 7vw, 56px);
+  font-weight: 400;
+  line-height: 1;
+  color: #fff;
+}
+.kvar-main .unit { font-size: 20px; opacity: 0.7; margin-left: 6px; }
+.kvar-recommended {
+  background: rgba(0,194,168,0.18);
+  border: 1.5px solid rgba(0,194,168,0.5);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  min-width: 200px;
+}
+.kvar-recommended .label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #7ffcef;
+  margin-bottom: 4px;
+}
+.kvar-recommended .value {
+  font-family: var(--mono);
+  font-size: 28px;
+  color: #fff;
+}
+
+/* ============================================================
+   RESULT STATS GRID
+   ============================================================ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+.stat-card .s-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.stat-card .s-value {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--blue);
+}
+
+/* ============================================================
+   FORMULA STEPS
+   ============================================================ */
+.steps { display: flex; flex-direction: column; gap: 10px; }
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  border-left: 3px solid var(--blue);
+}
+.step-num {
+  background: var(--blue);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 12px;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.step-content .s-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+.step-content .s-formula {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--text);
+}
+.step-content .s-result {
+  font-size: 13px;
+  color: var(--blue);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ============================================================
+   STANDARD RATINGS TABLE
+   ============================================================ */
+.ratings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.ratings-table th {
+  background: var(--blue);
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.ratings-table th:first-child { border-radius: 8px 0 0 0; }
+.ratings-table th:last-child  { border-radius: 0 8px 0 0; }
+.ratings-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+}
+.ratings-table tr:last-child td { border-bottom: none; }
+.ratings-table tr:nth-child(even) td { background: var(--surface2); }
+.ratings-table tr.highlight td {
+  background: rgba(0,194,168,0.12) !important;
+  color: var(--blue-dark);
+  font-weight: 700;
+}
+.badge-rec {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  font-family: var(--sans);
+}
+
+/* ============================================================
+   CHART
+   ============================================================ */
+.chart-wrap {
+  position: relative;
+  height: 260px;
+}
+
+/* ============================================================
+   ACTION BUTTONS
+   ============================================================ */
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: var(--radius-sm);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-decoration: none;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+.btn-pdf {
+  background: var(--blue-dark);
+  color: #fff;
+}
+.btn-linkedin {
+  background: #0077b5;
+  color: #fff;
+}
+.btn-reset {
+  background: var(--surface2);
+  color: var(--text-muted);
+  border: 1.5px solid var(--border);
+}
+
+/* SVG icon helper */
+.ico { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.site-footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.site-footer a { color: var(--blue); text-decoration: none; }
+
+/* ============================================================
+   HOSTING INSTRUCTIONS SECTION
+   ============================================================ */
+.hosting-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+.hosting-box h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--blue-dark);
+  margin-bottom: 18px;
+}
+.hosting-box h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--blue);
+  margin: 16px 0 6px;
+}
+.hosting-box ol, .hosting-box ul {
+  margin-left: 20px;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+.code-inline {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--blue-dark);
+}
+
+/* ============================================================
+   RESPONSIVE TWEAKS
+   ============================================================ */
+@media (max-width: 600px) {
+  .card { padding: 20px 16px; }
+  .kvar-hero { flex-direction: column; }
+  .action-row { flex-direction: column; }
+  .btn { justify-content: center; }
+}
+</style>
+</head>
+
+<body>
+<div class="page-wrap">
+
+  <!-- ======================================================
+       HEADER
+       ====================================================== -->
+  <header class="site-header">
+    <div class="header-eyebrow">⚡ Free Tool for Electrical Engineers</div>
+    <h1>Power Factor Capacitor Sizing Calculator</h1>
+    <p>Instantly calculate the required capacitor bank (kVAR) to improve your system's power factor. Enter your load parameters below and get a professional report in seconds.</p>
+    <div class="header-badge">✔ IEEE Compliant Formula &nbsp;|&nbsp; PDF Export &nbsp;|&nbsp; Free</div>
+  </header>
+
+  <!-- ======================================================
+       INPUT FORM CARD
+       ====================================================== -->
+  <div class="card">
+    <div class="card-title">Input Parameters</div>
+    <div class="form-grid">
+
+      <!-- 1. Load Power -->
+      <div class="field">
+        <label for="kw">Load Power</label>
+        <input type="number" id="kw" placeholder="e.g. 500" min="0" step="any">
+        <span class="hint">Enter in kilowatts (kW)</span>
+      </div>
+
+      <!-- 2. Existing PF -->
+      <div class="field">
+        <label for="pf1">Existing Power Factor (PF₁)</label>
+        <input type="number" id="pf1" placeholder="e.g. 0.70" min="0.01" max="0.9999" step="any">
+        <span class="hint">Decimal, e.g. 0.70 = 70%</span>
+      </div>
+
+      <!-- 3. Target PF -->
+      <div class="field">
+        <label for="pf2">Target Power Factor (PF₂)</label>
+        <input type="number" id="pf2" placeholder="e.g. 0.95" min="0.01" max="1" step="any">
+        <span class="hint">Decimal, e.g. 0.95 = 95%</span>
+      </div>
+
+      <!-- 4. Design Margin -->
+      <div class="field">
+        <label for="margin">Design Margin (%)</label>
+        <input type="number" id="margin" placeholder="e.g. 10" min="0" max="100" step="any" value="10">
+        <span class="hint">Optional safety margin (default 10%)</span>
+      </div>
+
+      <!-- 5. System Voltage -->
+      <div class="field">
+        <label for="voltage">System Voltage (optional)</label>
+        <input type="number" id="voltage" placeholder="e.g. 415" min="0" step="any">
+        <span class="hint">Line voltage in Volts</span>
+      </div>
+
+      <!-- 6. Frequency -->
+      <div class="field">
+        <label for="freq">Frequency (Hz)</label>
+        <select id="freq">
+          <option value="50" selected>50 Hz (IEC / Asia / Europe)</option>
+          <option value="60">60 Hz (ANSI / Americas)</option>
+        </select>
+        <span class="hint">Select grid frequency</span>
+      </div>
+
+    </div><!-- /form-grid -->
+
+    <button class="btn-calc" onclick="calculate()">⚡ Calculate Capacitor Size</button>
+  </div><!-- /card -->
+
+  <!-- ======================================================
+       RESULTS  (hidden until calc runs)
+       ====================================================== -->
+  <div id="results">
+
+    <!-- Hero result -->
+    <div class="kvar-hero" id="kvarHero">
+      <div class="kvar-main">
+        <div class="label">Required Capacitor Bank</div>
+        <div class="value"><span id="resKvarFinal">—</span><span class="unit">kVAR</span></div>
+        <div style="font-size:12px; opacity:0.6; margin-top:6px;" id="resMarginNote"></div>
+      </div>
+      <div class="kvar-recommended">
+        <div class="label">Recommended Standard Rating</div>
+        <div class="value" id="resStdRating">—</div>
+      </div>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="s-label">Load Power</div>
+        <div class="s-value" id="sKW">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">Existing PF</div>
+        <div class="s-value" id="sPF1">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">Target PF</div>
+        <div class="s-value" id="sPF2">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">Required kVAR (raw)</div>
+        <div class="s-value" id="sKvarRaw">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">Design Margin</div>
+        <div class="s-value" id="sMargin">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">Frequency</div>
+        <div class="s-value" id="sFreq">—</div>
+      </div>
+    </div>
+
+    <!-- Calculation Steps -->
+    <div class="card">
+      <div class="card-title">Calculation Breakdown</div>
+      <div class="steps" id="stepsContainer"></div>
+    </div>
+
+    <!-- Chart -->
+    <div class="card">
+      <div class="card-title">Power Factor Improvement — kVAR vs PF</div>
+      <div class="chart-wrap">
+        <canvas id="pfChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Standard Ratings Table -->
+    <div class="card">
+      <div class="card-title">Standard Capacitor Bank Ratings</div>
+      <table class="ratings-table" id="ratingsTable">
+        <thead>
+          <tr>
+            <th>Standard Rating (kVAR)</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="ratingsTbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-row">
+      <button class="btn btn-pdf" onclick="downloadPDF()">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 1.5L18.5 9H13zM6 4h5v6h7v10H6zm2 8v2h8v-2zm0 4v2h5v-2z"/></svg>
+        Download PDF Report
+      </button>
+      <button class="btn btn-linkedin" onclick="shareLinkedIn()">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M20.447 20.452H17.21v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.987V9h3.112v1.561h.046c.434-.82 1.494-1.684 3.072-1.684 3.285 0 3.891 2.163 3.891 4.977v6.598zM5.337 7.433a1.802 1.802 0 1 1 0-3.604 1.802 1.802 0 0 1 0 3.604zm1.567 13.019H3.77V9h3.134zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg>
+        Share on LinkedIn
+      </button>
+      <button class="btn btn-reset" onclick="resetForm()">
+        ↩ Reset
+      </button>
+    </div>
+
+  </div><!-- /#results -->
+
+  <!-- ======================================================
+       HOSTING INSTRUCTIONS
+       ====================================================== -->
+  <div class="hosting-box">
+    <h2>📡 How to Host This Tool for Free</h2>
+
+    <h3>Option A — GitHub Pages (Recommended)</h3>
+    <ol>
+      <li>Go to <a href="https://github.com" target="_blank">github.com</a> and create a free account.</li>
+      <li>Click <strong>New Repository</strong> → name it <span class="code-inline">pf-calculator</span> → set to <em>Public</em>.</li>
+      <li>Upload this HTML file and rename it <span class="code-inline">index.html</span>.</li>
+      <li>Go to <strong>Settings → Pages</strong> → Source: <em>Deploy from a branch</em> → Branch: <em>main</em> → Save.</li>
+      <li>Your live URL will be: <span class="code-inline">https://yourusername.github.io/pf-calculator/</span></li>
+    </ol>
+
+    <h3>Option B — Netlify (Drag & Drop — No coding!)</h3>
+    <ol>
+      <li>Go to <a href="https://netlify.com" target="_blank">netlify.com</a> and sign up free.</li>
+      <li>On the dashboard, drag and drop this HTML file into the deploy zone.</li>
+      <li>Netlify instantly gives you a live link like <span class="code-inline">https://random-name.netlify.app</span>.</li>
+      <li>Optional: Set a custom subdomain under <strong>Site Settings → Domain</strong>.</li>
+    </ol>
+
+    <p style="font-size:13px; color:var(--text-muted); margin-top:14px;">
+      💡 <strong>Tip:</strong> This entire tool is a single <span class="code-inline">.html</span> file — no server, no database, no backend needed. Just host the one file!
+    </p>
+  </div>
+
+  <!-- ======================================================
+       PAGE FOOTER
+       ====================================================== -->
+  <footer class="site-footer">
+    Generated using AI Electrical Engineering Tool &nbsp;|&nbsp;
+    Formula Reference: IEEE 1036 &amp; IEC 60831 &nbsp;|&nbsp;
+    Built with HTML, Chart.js &amp; jsPDF
+  </footer>
+
+</div><!-- /page-wrap -->
+
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+
+// ----------------------------------------------------------------
+// GLOBAL — stores results for PDF generation
+// ----------------------------------------------------------------
+let G = {};          // result data object
+let pfChartInst = null;  // Chart.js instance
+
+// Standard capacitor ratings array (kVAR)
+// You can add more values here if needed.
+const STANDARD_RATINGS = [5, 10, 15, 20, 25, 50, 75, 100, 150, 200];
+
+// ----------------------------------------------------------------
+// MAIN CALCULATION FUNCTION
+// ----------------------------------------------------------------
+function calculate() {
+
+  // --- 1. Read inputs ---
+  const kw     = parseFloat(document.getElementById('kw').value);
+  const pf1    = parseFloat(document.getElementById('pf1').value);
+  const pf2    = parseFloat(document.getElementById('pf2').value);
+  const margin = parseFloat(document.getElementById('margin').value) || 0;
+  const volt   = parseFloat(document.getElementById('voltage').value) || null;
+  const freq   = parseInt(document.getElementById('freq').value);
+
+  // --- 2. Validate inputs ---
+  if (isNaN(kw) || kw <= 0)          return alert('⚠️ Please enter a valid Load Power (kW).');
+  if (isNaN(pf1) || pf1<=0 || pf1>=1) return alert('⚠️ Existing PF must be between 0.01 and 0.9999.');
+  if (isNaN(pf2) || pf2<=0 || pf2>1)  return alert('⚠️ Target PF must be between 0.01 and 1.0.');
+  if (pf2 <= pf1)                     return alert('⚠️ Target PF must be greater than Existing PF.');
+
+  // --- 3. Core calculation ---
+  const phi1     = Math.acos(pf1);          // Step 1: φ1 = arccos(PF1)
+  const phi2     = Math.acos(pf2);          // Step 2: φ2 = arccos(PF2)
+  const tanPhi1  = Math.tan(phi1);
+  const tanPhi2  = Math.tan(phi2);
+  const kvarReq  = kw * (tanPhi1 - tanPhi2);  // Step 3: Required kVAR
+  const kvarFinal = kvarReq * (1 + margin / 100); // Step 4: Apply margin
+
+  // Recommended standard rating (smallest >= kvarFinal)
+  const stdRating = STANDARD_RATINGS.find(r => r >= kvarFinal) || STANDARD_RATINGS[STANDARD_RATINGS.length - 1];
+
+  // Store globally for PDF
+  G = {
+    kw, pf1, pf2, margin, volt, freq,
+    phi1Deg: (phi1 * 180 / Math.PI).toFixed(2),
+    phi2Deg: (phi2 * 180 / Math.PI).toFixed(2),
+    tanPhi1: tanPhi1.toFixed(4),
+    tanPhi2: tanPhi2.toFixed(4),
+    kvarReq:   kvarReq.toFixed(2),
+    kvarFinal: kvarFinal.toFixed(2),
+    stdRating
+  };
+
+  // --- 4. Populate UI ---
+
+  // Hero
+  document.getElementById('resKvarFinal').textContent = kvarFinal.toFixed(2);
+  document.getElementById('resStdRating').textContent  = stdRating + ' kVAR';
+  document.getElementById('resMarginNote').textContent  = `Includes ${margin}% design margin`;
+
+  // Stats strip
+  document.getElementById('sKW').textContent    = kw + ' kW';
+  document.getElementById('sPF1').textContent   = (pf1 * 100).toFixed(1) + '%';
+  document.getElementById('sPF2').textContent   = (pf2 * 100).toFixed(1) + '%';
+  document.getElementById('sKvarRaw').textContent = kvarReq.toFixed(2) + ' kVAR';
+  document.getElementById('sMargin').textContent  = margin + '%';
+  document.getElementById('sFreq').textContent   = freq + ' Hz';
+
+  // Calc steps
+  buildSteps(kw, pf1, pf2, phi1, phi2, tanPhi1, tanPhi2, kvarReq, kvarFinal, margin);
+
+  // Ratings table
+  buildRatingsTable(kvarFinal, stdRating);
+
+  // Chart
+  buildChart(kw, pf1, pf2);
+
+  // Show results
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ----------------------------------------------------------------
+// BUILD CALCULATION STEPS HTML
+// ----------------------------------------------------------------
+function buildSteps(kw, pf1, pf2, phi1, phi2, t1, t2, kvarReq, kvarFinal, margin) {
+  const container = document.getElementById('stepsContainer');
+  const phi1Deg = (phi1 * 180 / Math.PI).toFixed(3);
+  const phi2Deg = (phi2 * 180 / Math.PI).toFixed(3);
+
+  container.innerHTML = `
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="s-title">Calculate φ₁ (Existing Impedance Angle)</div>
+        <div class="s-formula">φ₁ = arccos(PF₁) = arccos(${pf1})</div>
+        <div class="s-result">→ φ₁ = ${phi1Deg}°</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="s-title">Calculate φ₂ (Target Impedance Angle)</div>
+        <div class="s-formula">φ₂ = arccos(PF₂) = arccos(${pf2})</div>
+        <div class="s-result">→ φ₂ = ${phi2Deg}°</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="s-title">Calculate Required Reactive Power</div>
+        <div class="s-formula">Q = kW × (tan φ₁ − tan φ₂)</div>
+        <div class="s-formula">Q = ${kw} × (${t1.toFixed(4)} − ${t2.toFixed(4)})</div>
+        <div class="s-result">→ Q = ${kvarReq.toFixed(3)} kVAR</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="s-title">Apply Design Margin (${margin}%)</div>
+        <div class="s-formula">Final kVAR = Q × (1 + ${margin}/100)</div>
+        <div class="s-formula">Final kVAR = ${kvarReq.toFixed(3)} × ${(1 + margin/100).toFixed(2)}</div>
+        <div class="s-result">→ Final kVAR = ${kvarFinal.toFixed(3)} kVAR</div>
+      </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------------------
+// BUILD STANDARD RATINGS TABLE
+// ----------------------------------------------------------------
+function buildRatingsTable(kvarFinal, stdRating) {
+  const tbody = document.getElementById('ratingsTbody');
+  tbody.innerHTML = '';
+
+  STANDARD_RATINGS.forEach(r => {
+    const isRec = r === stdRating;
+    const isUnder = r < kvarFinal;
+    const tr = document.createElement('tr');
+    if (isRec) tr.className = 'highlight';
+
+    let status = '—';
+    let notes  = 'May combine units for this rating';
+    if (isUnder) {
+      status = '✗ Undersized';
+      notes  = `${kvarFinal.toFixed(2)} kVAR required — insufficient`;
+    } else if (isRec) {
+      status = `<span class="badge-rec">✔ Recommended</span>`;
+      notes  = 'Nearest standard rating ≥ required kVAR';
+    } else {
+      status = '✓ Sufficient';
+      notes  = `Oversized by ${(r - kvarFinal).toFixed(1)} kVAR`;
+    }
+
+    tr.innerHTML = `<td>${r} kVAR</td><td>${status}</td><td>${notes}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ----------------------------------------------------------------
+// BUILD PF IMPROVEMENT CHART
+// ----------------------------------------------------------------
+function buildChart(kw, pf1, pf2) {
+  const labels = [];
+  const data   = [];
+
+  // Sweep target PF from pf1 to 1.0 in steps
+  for (let pf = pf1; pf <= 1.001; pf += 0.01) {
+    const clampedPf = Math.min(pf, 1.0);
+    const phi1 = Math.acos(pf1);
+    const phi2 = Math.acos(clampedPf);
+    const kvar = kw * (Math.tan(phi1) - Math.tan(phi2));
+    labels.push((clampedPf * 100).toFixed(0) + '%');
+    data.push(Math.max(0, kvar).toFixed(2));
+  }
+
+  // Mark target PF on chart
+  const targetIdx = labels.findIndex(l => parseFloat(l) >= pf2 * 100);
+  const pointColors = data.map((_, i) => i === targetIdx ? '#00c2a8' : 'rgba(41,121,255,0.0)');
+  const pointRadii  = data.map((_, i) => i === targetIdx ? 7 : 3);
+
+  if (pfChartInst) pfChartInst.destroy();
+
+  const ctx = document.getElementById('pfChart').getContext('2d');
+  pfChartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Required kVAR',
+        data,
+        borderColor: '#1560bd',
+        backgroundColor: 'rgba(21,96,189,0.08)',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: pointColors,
+        pointRadius: pointRadii,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.y} kVAR`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Target Power Factor', font: { size: 12 }, color: '#5a6e85' },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        },
+        y: {
+          title: { display: true, text: 'Required kVAR', font: { size: 12 }, color: '#5a6e85' },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+// ----------------------------------------------------------------
+// PDF REPORT GENERATION
+// ----------------------------------------------------------------
+function downloadPDF() {
+  if (!G.kw) return alert('Please calculate first.');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const lm = 20;   // left margin
+  const pw = 170;  // page width usable
+  let y  = 20;     // current Y cursor
+
+  // Helper functions
+  const ln  = (n=6) => { y += n; };
+  const line = () => { doc.setDrawColor(200,210,220); doc.setLineWidth(0.3); doc.line(lm, y, lm+pw, y); ln(4); };
+
+  // ---- HEADER ----
+  doc.setFillColor(21, 96, 189);
+  doc.rect(0, 0, 210, 36, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(18);
+  doc.text('POWER FACTOR CORRECTION REPORT', lm, 16);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.text('Generated using AI Electrical Engineering Tool  |  IEEE 1036 / IEC 60831 Compliant', lm, 24);
+  doc.text('Date: ' + new Date().toLocaleDateString('en-GB', {year:'numeric',month:'long',day:'numeric'}), lm, 30);
+  y = 46;
+
+  // ---- SECTION: INPUT PARAMETERS ----
+  doc.setTextColor(21, 96, 189);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.text('1. INPUT PARAMETERS', lm, y); ln(2);
+  line();
+
+  const rows1 = [
+    ['Load Power (kW)',      G.kw + ' kW'],
+    ['Existing Power Factor (PF₁)', (G.pf1*100).toFixed(1) + '% (' + G.pf1 + ')'],
+    ['Target Power Factor (PF₂)',   (G.pf2*100).toFixed(1) + '% (' + G.pf2 + ')'],
+    ['Design Margin',        G.margin + '%'],
+    ['System Voltage',       G.volt ? G.volt + ' V' : 'Not specified'],
+    ['Frequency',            G.freq + ' Hz'],
+  ];
+  renderTable(doc, rows1, lm, y, pw);
+  y += rows1.length * 9 + 4;
+
+  // ---- SECTION: FORMULA ----
+  doc.setTextColor(21, 96, 189);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.text('2. FORMULA USED', lm, y); ln(2);
+  line();
+
+  doc.setTextColor(40,40,40);
+  doc.setFont('courier','normal');
+  doc.setFontSize(9.5);
+  const formulaLines = [
+    'Step 1:  phi1  = arccos(PF1)',
+    'Step 2:  phi2  = arccos(PF2)',
+    'Step 3:  Q_req = kW x (tan(phi1) - tan(phi2))   [kVAR]',
+    'Step 4:  Q_final = Q_req x (1 + Margin/100)     [kVAR]',
+  ];
+  formulaLines.forEach(fl => { doc.text(fl, lm+4, y); ln(6); });
+  ln(2);
+
+  // ---- SECTION: CALCULATION STEPS ----
+  doc.setTextColor(21, 96, 189);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.text('3. CALCULATION STEPS', lm, y); ln(2);
+  line();
+
+  const rows2 = [
+    ['φ₁ = arccos(' + G.pf1 + ')',      G.phi1Deg + '°'],
+    ['φ₂ = arccos(' + G.pf2 + ')',      G.phi2Deg + '°'],
+    ['tan(φ₁)',                          G.tanPhi1],
+    ['tan(φ₂)',                          G.tanPhi2],
+    ['Q_required = ' + G.kw + ' × (' + G.tanPhi1 + ' − ' + G.tanPhi2 + ')', G.kvarReq + ' kVAR'],
+    ['Q_final (with ' + G.margin + '% margin)', G.kvarFinal + ' kVAR'],
+  ];
+  renderTable(doc, rows2, lm, y, pw);
+  y += rows2.length * 9 + 4;
+
+  // ---- SECTION: RESULTS ----
+  doc.setTextColor(21, 96, 189);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.text('4. RESULTS', lm, y); ln(2);
+  line();
+
+  // Highlight box
+  doc.setFillColor(230, 240, 255);
+  doc.roundedRect(lm, y-2, pw, 22, 3, 3, 'F');
+  doc.setTextColor(13, 61, 138);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.text('Required Capacitor Bank: ' + G.kvarFinal + ' kVAR', lm+6, y+7);
+  doc.setFontSize(10);
+  doc.text('Recommended Standard Rating: ' + G.stdRating + ' kVAR', lm+6, y+16);
+  y += 28;
+
+  // ---- FOOTER ----
+  const pageH = doc.internal.pageSize.height;
+  doc.setFillColor(245, 247, 250);
+  doc.rect(0, pageH-14, 210, 14, 'F');
+  doc.setTextColor(130,140,160);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.text('Generated using AI Electrical Engineering Tool  |  For guidance only — verify with a licensed engineer', 105, pageH-5, { align:'center' });
+
+  doc.save('PF_Correction_Report_' + G.kw + 'kW.pdf');
+}
+
+// Helper: simple two-column table in PDF
+function renderTable(doc, rows, x, y, pw) {
+  rows.forEach((row, i) => {
+    const bg = i % 2 === 0 ? [248, 250, 254] : [255,255,255];
+    doc.setFillColor(...bg);
+    doc.rect(x, y-4, pw, 9, 'F');
+    doc.setTextColor(50, 65, 90);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.text(row[0], x+4, y+1);
+    doc.setFont('helvetica','bold');
+    doc.text(row[1], x + pw - 4, y+1, { align:'right' });
+    y += 9;
+  });
+}
+
+// ----------------------------------------------------------------
+// LINKEDIN SHARE
+// ----------------------------------------------------------------
+function shareLinkedIn() {
+  const kvar = G.kvarFinal || '?';
+  const kw   = G.kw   || '?';
+  const pf1  = G.pf1  || '?';
+  const pf2  = G.pf2  || '?';
+  const text = encodeURIComponent(
+    `⚡ Just used this free Power Factor Capacitor Calculator!\n\n` +
+    `Load: ${kw} kW | PF improved from ${(pf1*100||0).toFixed(0)}% → ${(pf2*100||0).toFixed(0)}% | Required: ${kvar} kVAR\n\n` +
+    `A handy tool for electrical engineers to calculate capacitor bank sizing. Check it out!\n\n` +
+    `#ElectricalEngineering #PowerFactor #CapacitorBank #ElectricPower #Engineering`
+  );
+  const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&summary=${text}`;
+  window.open(url, '_blank', 'width=600,height=600');
+}
+
+// ----------------------------------------------------------------
+// RESET FORM
+// ----------------------------------------------------------------
+function resetForm() {
+  ['kw','pf1','pf2','voltage'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('margin').value = '10';
+  document.getElementById('freq').value   = '50';
+  document.getElementById('results').style.display = 'none';
+  G = {};
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+</script>
+</body>
+</html>
