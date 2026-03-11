@@ -580,10 +580,7 @@ body {
         <div class="value"><span id="resKvarFinal">—</span><span class="unit">kVAR</span></div>
         <div style="font-size:12px; opacity:0.6; margin-top:6px;" id="resMarginNote"></div>
       </div>
-      <div class="kvar-recommended">
-        <div class="label">Recommended Standard Rating</div>
-        <div class="value" id="resStdRating">—</div>
-      </div>
+
     </div>
 
     <!-- Stats strip -->
@@ -628,20 +625,7 @@ body {
       </div>
     </div>
 
-    <!-- Standard Ratings Table -->
-    <div class="card">
-      <div class="card-title">Standard Capacitor Bank Ratings</div>
-      <table class="ratings-table" id="ratingsTable">
-        <thead>
-          <tr>
-            <th>Standard Rating (kVAR)</th>
-            <th>Status</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody id="ratingsTbody"></tbody>
-      </table>
-    </div>
+
 
     <!-- Action Buttons -->
     <div class="action-row">
@@ -660,33 +644,7 @@ body {
 
   </div><!-- /#results -->
 
-  <!-- ======================================================
-       HOSTING INSTRUCTIONS
-       ====================================================== -->
-  <div class="hosting-box">
-    <h2>📡 How to Host This Tool for Free</h2>
 
-    <h3>Option A — GitHub Pages (Recommended)</h3>
-    <ol>
-      <li>Go to <a href="https://github.com" target="_blank">github.com</a> and create a free account.</li>
-      <li>Click <strong>New Repository</strong> → name it <span class="code-inline">pf-calculator</span> → set to <em>Public</em>.</li>
-      <li>Upload this HTML file and rename it <span class="code-inline">index.html</span>.</li>
-      <li>Go to <strong>Settings → Pages</strong> → Source: <em>Deploy from a branch</em> → Branch: <em>main</em> → Save.</li>
-      <li>Your live URL will be: <span class="code-inline">https://yourusername.github.io/pf-calculator/</span></li>
-    </ol>
-
-    <h3>Option B — Netlify (Drag & Drop — No coding!)</h3>
-    <ol>
-      <li>Go to <a href="https://netlify.com" target="_blank">netlify.com</a> and sign up free.</li>
-      <li>On the dashboard, drag and drop this HTML file into the deploy zone.</li>
-      <li>Netlify instantly gives you a live link like <span class="code-inline">https://random-name.netlify.app</span>.</li>
-      <li>Optional: Set a custom subdomain under <strong>Site Settings → Domain</strong>.</li>
-    </ol>
-
-    <p style="font-size:13px; color:var(--text-muted); margin-top:14px;">
-      💡 <strong>Tip:</strong> This entire tool is a single <span class="code-inline">.html</span> file — no server, no database, no backend needed. Just host the one file!
-    </p>
-  </div>
 
   <!-- ======================================================
        PAGE FOOTER
@@ -742,9 +700,6 @@ function calculate() {
   const kvarReq  = kw * (tanPhi1 - tanPhi2);  // Step 3: Required kVAR
   const kvarFinal = kvarReq * (1 + margin / 100); // Step 4: Apply margin
 
-  // Recommended standard rating (smallest >= kvarFinal)
-  const stdRating = STANDARD_RATINGS.find(r => r >= kvarFinal) || STANDARD_RATINGS[STANDARD_RATINGS.length - 1];
-
   // Store globally for PDF
   G = {
     kw, pf1, pf2, margin, volt, freq,
@@ -753,15 +708,13 @@ function calculate() {
     tanPhi1: tanPhi1.toFixed(4),
     tanPhi2: tanPhi2.toFixed(4),
     kvarReq:   kvarReq.toFixed(2),
-    kvarFinal: kvarFinal.toFixed(2),
-    stdRating
+    kvarFinal: kvarFinal.toFixed(2)
   };
 
   // --- 4. Populate UI ---
 
   // Hero
   document.getElementById('resKvarFinal').textContent = kvarFinal.toFixed(2);
-  document.getElementById('resStdRating').textContent  = stdRating + ' kVAR';
   document.getElementById('resMarginNote').textContent  = `Includes ${margin}% design margin`;
 
   // Stats strip
@@ -774,9 +727,6 @@ function calculate() {
 
   // Calc steps
   buildSteps(kw, pf1, pf2, phi1, phi2, tanPhi1, tanPhi2, kvarReq, kvarFinal, margin);
-
-  // Ratings table
-  buildRatingsTable(kvarFinal, stdRating);
 
   // Chart
   buildChart(kw, pf1, pf2);
@@ -1023,16 +973,13 @@ function downloadPDF() {
   doc.text('4. RESULTS', lm, y); ln(2);
   line();
 
-  // Highlight box
   doc.setFillColor(230, 240, 255);
-  doc.roundedRect(lm, y-2, pw, 22, 3, 3, 'F');
+  doc.roundedRect(lm, y-2, pw, 16, 3, 3, 'F');
   doc.setTextColor(13, 61, 138);
   doc.setFont('helvetica','bold');
   doc.setFontSize(13);
   doc.text('Required Capacitor Bank: ' + G.kvarFinal + ' kVAR', lm+6, y+7);
-  doc.setFontSize(10);
-  doc.text('Recommended Standard Rating: ' + G.stdRating + ' kVAR', lm+6, y+16);
-  y += 28;
+  y += 22;
 
   // ---- FOOTER ----
   const pageH = doc.internal.pageSize.height;
